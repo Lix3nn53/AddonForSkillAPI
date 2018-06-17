@@ -1,0 +1,90 @@
+# ---------------------------------------------- #
+#              General Configuration             #
+# ---------------------------------------------- #
+#          Addon for Skill-API by Lix3nn         #
+# ---------------------------------------------- #
+
+#   inducator for any damage done by players
+DamageInducators: true
+#   inducator for healing done by skills
+HealInducators: true
+
+#   all armor stands does not take any damage from entities
+AllArmorStandsInvulnerable: true
+
+#   target's x location + random between xmax-xmin = x location to summon inducator
+ArmorStandSpawnLocation: 
+  xmax: 0.5
+  xmin: 0.0
+  ymax: 1.0
+  ymin: 0.0
+  zmax: 0.5
+  zmin: 0.0
+
+#   Sound to play when failed to cast skill
+FailSound: 
+  name: ''
+  
+#   Icons
+Icons: 
+  damage: '➹'
+  heal: '❤'
+
+#   decimal digits for inducators, 0 for no decimal
+Digits:
+  damage: 0
+  heal: 0
+  
+#   %class% and %level%
+#   Color codes: & followed by 0-9, A-F, a-f, K-O, k-o, R or r.
+#   for color of the player's class use %color%
+ChatPrefix:
+  tablist: true
+  active: true
+  prefix: '%color%[%class%%color%] &6%level% &f'
+ 
+#   if howmanyblocks is 0 feature is disabled. if howmanyblocks is 1, block1 will work but block2 wont
+#   if player breaks block1, skill1 will be cast by player
+#   you must write materials instead of block1 etc
+#   for material list: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Material.html
+#   skill must have a cast trigger
+
+BlockBreakEvent:
+  howmanyblocks: 0
+  blocks:
+  - ACACIA_DOOR
+  - ACACIA_FENCE
+  skills:
+    1:
+    - skill1forblock1
+    - skill2forblock1
+    2:
+    - skill1forblock2
+    
+#   Block skills in worldguard regions
+ProtectedRegions:
+  regions:
+  - region1
+  - region2
+  blockSkillMessage: '&cYou cant use skills in this region.'
+  
+#   fix skillapi hotbar casting bugs
+SkillSlots:
+  active: false
+  nonSkillSlots:
+  - 9
+  - 8
+  - 7
+  - 6
+  - 5
+  
+#   Same groups(races) cant hit each other
+FriendlyRaces:
+  active: false
+  worldBlackList:
+  - mypvpworld
+  
+#   if you drink a potion named "Healing Skill level 1" and your split: ' level '
+#   player will use this skill "healing skill" as level 1
+PotionSkill:
+  split: ' level '
