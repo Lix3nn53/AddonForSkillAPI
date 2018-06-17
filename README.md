@@ -14,6 +14,7 @@ Here is a list of what my Addon does:
 - Another feature lacking on SkillAPI, protected World Guard Regions, where skills cannot be used!
 - Friendly races option: Players of same class groups cant hit each other
 - Fixes for skill bar errors
+- Cast skills on drinking potions
 
 Everything in my plugin is toggleable, so if you don't like a feature, feel free to disable it!
 
