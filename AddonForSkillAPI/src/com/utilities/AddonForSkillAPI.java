@@ -70,6 +70,7 @@ public class AddonForSkillAPI extends JavaPlugin implements SkillPlugin, Listene
 	public static HashMap<String , Integer> digits = new HashMap<String , Integer>();
 	
 	public static String chatPrefix = "";
+	public static String chatSuffix = "";
 	
 	public static HashMap<Integer , Material> blockType = new HashMap<Integer , Material>();
 	public static HashMap<Integer , List<String>> blockSkill = new HashMap<Integer , List<String>>();
@@ -516,6 +517,7 @@ public class AddonForSkillAPI extends JavaPlugin implements SkillPlugin, Listene
         potionSplit = yaml.getString("PotionSkill.split");
         
         chatPrefix = ChatColor.translateAlternateColorCodes('&', yaml.getString("ChatPrefix.prefix"));
+        chatSuffix = ChatColor.translateAlternateColorCodes('&', yaml.getString("ChatPrefix.suffix"));
         
         boolean chatactive = yaml.getBoolean("ChatPrefix.active");
         boolean tabName = yaml.getBoolean("ChatPrefix.tablist");
@@ -602,6 +604,7 @@ public class AddonForSkillAPI extends JavaPlugin implements SkillPlugin, Listene
         configurations.put("skillSlotsActive", false);
         configurations.put("tablistName", true);
         potionSplit = " level ";
+        chatSuffix = ChatColor.GRAY + " > " + ChatColor.WHITE;
     }
     
     @EventHandler(priority = EventPriority.LOW)
@@ -614,7 +617,7 @@ public class AddonForSkillAPI extends JavaPlugin implements SkillPlugin, Listene
 	    //replacing your values
 	    format = format.replace("<player>", "%s"); //the player name will be automatically replaced by player.getDisplayName() you could write "%s" too but if you do it like that, you can place the message before the player's name
 	    format = format.replace("<group-prefix>", getChatPrefix(eventPlayer)); //something like that
-	    format = format.replace("<group-suffix>", ChatColor.GRAY + " > "); //something like that
+	    format = format.replace("<group-suffix>", chatSuffix); //something like that
 	    format = format.replace("<message>", "%s");
 	    e.setFormat(format);
 	    
