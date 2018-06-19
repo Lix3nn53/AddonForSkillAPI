@@ -9,6 +9,10 @@ DamageInducators: true
 #   inducator for healing done by skills
 HealInducators: true
 
+InducatorAnimation:
+  enabled: true
+  radius: 0.12
+
 #   all armor stands does not take any damage from entities
 AllArmorStandsInvulnerable: true
 
@@ -42,6 +46,7 @@ ChatPrefix:
   tablist: true
   active: true
   prefix: '%color%[%class%%color%] &6%level% &f'
+  suffix: '&7 > &f'
  
 #   if howmanyblocks is 0 feature is disabled. if howmanyblocks is 1, block1 will work but block2 wont
 #   if player breaks block1, skill1 will be cast by player
@@ -60,13 +65,6 @@ BlockBreakEvent:
     - skill2forblock1
     2:
     - skill1forblock2
-    
-#   Block skills in worldguard regions
-ProtectedRegions:
-  regions:
-  - region1
-  - region2
-  blockSkillMessage: '&cYou cant use skills in this region.'
   
 #   fix skillapi hotbar casting bugs
 SkillSlots:
@@ -77,12 +75,6 @@ SkillSlots:
   - 7
   - 6
   - 5
-  
-#   Same groups(races) cant hit each other
-FriendlyRaces:
-  active: false
-  worldBlackList:
-  - mypvpworld
   
 #   if you drink a potion named "Healing Skill level 1" and your split: ' level '
 #   player will use this skill "healing skill" as level 1

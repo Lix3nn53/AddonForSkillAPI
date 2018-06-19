@@ -3,7 +3,7 @@ name: AddonForSkillAPI
 version: 1.0
 author: Lix3nn
 description: AddonForSkillAPI
-depend: [SkillAPI]
+depend: [SkillAPI,ProtocolLib,PacketWrapper]
 commands:
   afs:
   

@@ -8,7 +8,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
-import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -18,7 +17,6 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.HumanEntity;
@@ -33,7 +31,6 @@ import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
-import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLevelChangeEvent;
@@ -43,11 +40,11 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import com.sk89q.worldguard.bukkit.WGBukkit;
-import com.sk89q.worldguard.protection.regions.ProtectedRegion;
+import com.comphenix.packetwrapper.WrapperPlayServerEntityTeleport;
+import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.ProtocolManager;
 import com.sucy.skill.SkillAPI;
 import com.sucy.skill.api.SkillPlugin;
-import com.sucy.skill.api.event.PlayerCastSkillEvent;
 import com.sucy.skill.api.event.PlayerClassChangeEvent;
 import com.sucy.skill.api.event.SkillDamageEvent;
 import com.sucy.skill.api.event.SkillHealEvent;
@@ -60,9 +57,15 @@ import net.md_5.bungee.api.ChatColor;
 
 public class AddonForSkillAPI extends JavaPlugin implements SkillPlugin, Listener {
 	
-	public static HashMap<UUID , Integer> justJoined = new HashMap<UUID , Integer>();
+	private static AddonForSkillAPI instance;
 	
-	public static HashMap<Integer , String> blockedRegions = new HashMap<Integer , String>();
+	public static AddonForSkillAPI getInstance()
+	  {
+	    return instance;
+	  }
+	
+	public ProtocolManager protocolManager;
+	public static int LASTEST_HOLOGRAM_ID = 1700500;
 	
 	public static HashMap<String , Boolean> configurations = new HashMap<String , Boolean>();
 	public static HashMap<String , Double> asLoc = new HashMap<String , Double>();
@@ -74,21 +77,23 @@ public class AddonForSkillAPI extends JavaPlugin implements SkillPlugin, Listene
 	
 	public static HashMap<Integer , Material> blockType = new HashMap<Integer , Material>();
 	public static HashMap<Integer , List<String>> blockSkill = new HashMap<Integer , List<String>>();
-	public static String regionMessage = ChatColor.RED + "You cant use skills in this region."; 
 	
 	public static String skillFailSound = ""; 
 	
 	List<Integer> nonSkillSlots = new ArrayList<Integer>();
 	
-	public static List<String> friendlyIgnoreMaps = new ArrayList<String>();
-	
 	public static String potionSplit = ""; 
+	
+	double radius = 0.12;
 	
     @Override
     public void onEnable() {
+    	instance = this;
 		Bukkit.getPluginManager().registerEvents(this, this);
 		
 		createYml("config");
+		
+		protocolManager = ProtocolLibrary.getProtocolManager();
     }
     
     @Override
@@ -183,41 +188,54 @@ public class AddonForSkillAPI extends JavaPlugin implements SkillPlugin, Listene
     
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEntityDamageByEntityEvent(EntityDamageByEntityEvent e) {
-    	boolean notFriendlyRace = true;
-    	if(configurations.get("friendlyraces")) {
-    		boolean canPass = true;
-    		if(!friendlyIgnoreMaps.isEmpty()) {
-    			if(friendlyIgnoreMaps.contains(e.getEntity().getWorld().getName())){
-    				canPass = false;
-    			}
-    		}
-    		if(canPass) {
-	    		if(e.getEntity() instanceof Player && e.getDamager() instanceof Player){
-	    			Player p1 = (Player) e.getDamager();
-	    			Player p2 = (Player) e.getEntity();
-	    			
-	    			PlayerData sdata1 = SkillAPI.getPlayerData(p1);
-	    			String grup1 = sdata1.getMainClass().getData().getGroup();
-	    			
-	    			PlayerData sdata2 = SkillAPI.getPlayerData(p2);
-	    			String grup2 = sdata2.getMainClass().getData().getGroup();
-	    			
-	    			if(grup1.equals(grup2)) {
-	    				e.setCancelled(true);
-	    				notFriendlyRace = false;
-	    			}
-	    		}
-    		}
-    	}
     	if(configurations.get("damage")) {
 	    	if(e.getEntity() instanceof LivingEntity){
 	    		if(e.getCause().equals(DamageCause.CUSTOM)){
 	        		return;
 	        	}
-	    		if(notFriendlyRace) {
-		    		LivingEntity p = (LivingEntity) e.getEntity();
-		    		if(!p.getType().equals(EntityType.ARMOR_STAND)){
-				    	if(e.getDamager() instanceof Player){
+	    		LivingEntity entity = (LivingEntity) e.getEntity();
+	    		if(!entity.getType().equals(EntityType.ARMOR_STAND)){
+			    	if(e.getDamager() instanceof Player){
+			    		Player p = (Player) e.getDamager();
+			    		String text = "error";
+			    		if(digits.get("dmg") < 1) {
+			    			int hpgain = (int) (e.getDamage() + 0.5);
+			    			text = ChatColor.RED.toString() + hpgain + " " + iconss.get("icondmg");
+			    		}else {
+			    			BigDecimal hpgain = new BigDecimal(e.getDamage()).setScale(digits.get("dmg"), RoundingMode.CEILING);
+			    			text = ChatColor.RED.toString() + hpgain + " " + iconss.get("icondmg");
+			    		}
+			    		double x = (new Random().nextDouble() * (asLoc.get("xmax") - asLoc.get("xmin"))) + asLoc.get("xmin");
+			    		double y = (new Random().nextDouble() * (asLoc.get("ymax") - asLoc.get("ymin"))) + asLoc.get("ymin");
+			    		double z = (new Random().nextDouble() * (asLoc.get("zmax") - asLoc.get("zmin"))) + asLoc.get("zmin");
+			    		double chance1 = new Random().nextDouble();
+			    		double chance2 = new Random().nextDouble();
+			    		if(chance1 < 0.5) {
+			    			x = -x;
+			    		}
+			    		if(chance2 < 0.5) {
+			    			z = -z;
+			    		}
+			    		Location loc = entity.getLocation().add(x, y, z);
+
+			    		if(configurations.get("animation")) {
+			    			playFakeArmorStandAnimation(p, entity, loc, text);
+			    		}else {
+			    			FakeHologram as = new FakeHologram(loc, text);
+			    	    	as.showToPlayer(p, protocolManager);
+			    	    	new BukkitRunnable() {
+			    	    		
+			    	    	    @Override
+			    	    	    public void run() {
+			    	    	    	cancel();
+		    	    				as.remove(p, protocolManager);
+			    	    	    }
+			    			}.runTaskTimerAsynchronously(this, 18L, 18L);
+			    		}
+			    	}else if (e.getDamager() instanceof Arrow){
+			    		Arrow arw = (Arrow) e.getDamager();
+			    		if(arw.getShooter() instanceof Player) {
+			    			Player p = (Player) arw.getShooter();
 				    		String text = "error";
 				    		if(digits.get("dmg") < 1) {
 				    			int hpgain = (int) (e.getDamage() + 0.5);
@@ -237,51 +255,28 @@ public class AddonForSkillAPI extends JavaPlugin implements SkillPlugin, Listene
 				    		if(chance2 < 0.5) {
 				    			z = -z;
 				    		}
-				    		Location loc = p.getLocation().add(x, y, z);
-				    		ArmorStand as = LixHologram.createTextLine(loc, text);
-				    		new BukkitRunnable() {
-				
-					    	    @Override
-					    	    public void run() {
-					    	    	as.remove();
-					    	    	cancel();
-					    	    }
-				    		}.runTaskTimerAsynchronously(this, 18L, 18L);
-				    	}else if (e.getDamager() instanceof Arrow){
-				    		String text = "error";
-				    		if(digits.get("dmg") < 1) {
-				    			int hpgain = (int) (e.getDamage() + 0.5);
-				    			text = ChatColor.RED.toString() + hpgain + " " + iconss.get("icondmg");
+				    		Location loc = entity.getLocation().add(x, y, z);
+
+				    		if(configurations.get("animation")) {
+				    			playFakeArmorStandAnimation(p, entity, loc, text);
 				    		}else {
-				    			BigDecimal hpgain = new BigDecimal(e.getDamage()).setScale(digits.get("dmg"), RoundingMode.CEILING);
-				    			text = ChatColor.RED.toString() + hpgain + " " + iconss.get("icondmg");
+				    			FakeHologram as = new FakeHologram(loc, text);
+				    	    	as.showToPlayer(p, protocolManager);
+				    	    	new BukkitRunnable() {
+				    	    		
+				    	    	    @Override
+				    	    	    public void run() {
+				    	    	    	cancel();
+			    	    				as.remove(p, protocolManager);
+				    	    	    }
+				    			}.runTaskTimerAsynchronously(this, 18L, 18L);
 				    		}
-				    		double x = (new Random().nextDouble() * (asLoc.get("xmax") - asLoc.get("xmin"))) + asLoc.get("xmin");
-				    		double y = (new Random().nextDouble() * (asLoc.get("ymax") - asLoc.get("ymin"))) + asLoc.get("ymin");
-				    		double z = (new Random().nextDouble() * (asLoc.get("zmax") - asLoc.get("zmin"))) + asLoc.get("zmin");
-				    		double chance1 = new Random().nextDouble();
-				    		double chance2 = new Random().nextDouble();
-				    		if(chance1 < 0.5) {
-				    			x = -x;
-				    		}
-				    		if(chance2 < 0.5) {
-				    			z = -z;
-				    		}
-				    		Location loc = p.getLocation().add(x, y, z);
-				    		ArmorStand as = LixHologram.createTextLine(loc, text);
-				    		new BukkitRunnable() {
-				
-					    	    @Override
-					    	    public void run() {
-					    	    	as.remove();
-					    	    	cancel();
-					    	    }
-				    		}.runTaskTimerAsynchronously(this, 18L, 18L);
-				    	}
-		    		}
-		    	}
+			    		}
+			    	}
+	    		}
 	    	}
     	}
+    	
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -290,7 +285,7 @@ public class AddonForSkillAPI extends JavaPlugin implements SkillPlugin, Listene
 	    	if(e.getTarget() instanceof LivingEntity){
 	    		if(!e.getTarget().getType().equals(EntityType.ARMOR_STAND)){
 			    	if(e.getHealer() instanceof Player){
-			    		LivingEntity p = (LivingEntity) e.getTarget();
+			    		LivingEntity entity = (LivingEntity) e.getTarget();
 			    		String text = "error";
 			    		if(digits.get("heal") < 1) {
 			    			int hpgain = (int) (e.getAmount() + 0.5);
@@ -310,20 +305,68 @@ public class AddonForSkillAPI extends JavaPlugin implements SkillPlugin, Listene
 			    		if(chance2 < 0.5) {
 			    			z = -z;
 			    		}
-			    		Location loc = p.getLocation().add(x, y, z);
-			    		ArmorStand as = LixHologram.createTextLine(loc, text);
-			    		new BukkitRunnable() {
-			
-				    	    @Override
-				    	    public void run() {
-				    	    	as.remove();
-				    	    	cancel();
-				    	    }
-			    		}.runTaskTimerAsynchronously(this, 12L, 12L);
+			    		Location loc = entity.getLocation().add(x, y, z);
+			    		Player p = (Player) e.getHealer();
+			    		if(configurations.get("animation")) {
+			    			playFakeArmorStandAnimation(p, entity, loc, text);
+			    		}else {
+			    			FakeHologram as = new FakeHologram(loc, text);
+			    	    	as.showToPlayer(p, protocolManager);
+			    	    	new BukkitRunnable() {
+			    	    		
+			    	    	    @Override
+			    	    	    public void run() {
+			    	    	    	cancel();
+		    	    				as.remove(p, protocolManager);
+			    	    	    }
+			    			}.runTaskTimerAsynchronously(this, 18L, 18L);
+			    		}
 			    	}
 	    		}
 	    	}
     	}
+    }
+    
+    public void playFakeArmorStandAnimation(Player p, LivingEntity entity, Location loc, String text) {
+    	Location loc2 = entity.getLocation();
+    	double xx = 1;
+    	if(loc.getX() < loc2.getX()) {
+    		xx = -xx;
+    	}
+    	double zz = 1;
+    	if(loc.getZ() < loc2.getZ()) {
+    		zz = -zz;
+    	}
+    	double x = xx;
+    	double z = zz;
+    	
+    	FakeHologram as = new FakeHologram(loc, text);
+    	as.showToPlayer(p, protocolManager);
+    	
+    	new BukkitRunnable() {
+			
+    		int count = 0;
+    		float angle = 0f;
+    		
+    	    @Override
+    	    public void run() {
+    	    	WrapperPlayServerEntityTeleport a = new WrapperPlayServerEntityTeleport();
+    	    	a.setEntityID(as.ENTITY_ID);
+    	    	a.setOnGround(false);
+    	    	a.setX(loc.getX());
+    	    	a.setY(loc.getY());
+    	    	a.setZ(loc.getZ());
+    	    	a.sendPacket(p);
+    			if(count > 8) {
+    				cancel();
+    				as.remove(p, protocolManager);
+    			}else {
+    				angle += 0.1;
+    				loc.add(x * radius * Math.sin(angle),radius * Math.cos(angle),z * radius * Math.sin(angle));
+    			}
+    			count++;
+    	    }
+		}.runTaskTimerAsynchronously(this, 0L, 2L);
     }
     
 	@Override
@@ -339,40 +382,10 @@ public class AddonForSkillAPI extends JavaPlugin implements SkillPlugin, Listene
 	}
 	
 	@EventHandler
-    public void onPlayerChangedWorldEvent(PlayerChangedWorldEvent e)
-    {
-    	Player p = e.getPlayer();
-    	UUID uuid = p.getUniqueId();
-    	justJoined.put(uuid, 1);
-    	new BukkitRunnable() {
-
-    	    @Override
-    	    public void run() {
-    	    	cancel();
-    	    	if(justJoined.containsKey(uuid)){
-    	    		justJoined.remove(uuid);
-    	    	}
-    	    }
-    	}.runTaskTimer(this, 30L, 30L);
-    }
-	
-	@EventHandler
     public void onPlayerJoin(PlayerJoinEvent e)
     {
 		Player p = e.getPlayer();
-    	UUID uuid = p.getUniqueId();
-    	justJoined.put(uuid, 1);
     	changeTabName(p);
-    	new BukkitRunnable() {
-
-    	    @Override
-    	    public void run() {
-    	    	cancel();
-    	    	if(justJoined.containsKey(uuid)){
-    	    		justJoined.remove(uuid);
-    	    	}
-    	    }
-    	}.runTaskTimer(this, 40L, 40L);
     }
 	
 	@EventHandler
@@ -387,39 +400,6 @@ public class AddonForSkillAPI extends JavaPlugin implements SkillPlugin, Listene
     {
 		Player p = e.getPlayerData().getPlayer();
 		changeTabName(p);
-    }
-	
-    @EventHandler
-    public void onSkillUse(PlayerCastSkillEvent e)
-    {
-    	if(justJoined.containsKey(e.getPlayer().getUniqueId())){
-    		e.setCancelled(true);
-    	}
-    	boolean InArena = false;
-    	Player p = e.getPlayer();
-		for(ProtectedRegion rg : WGBukkit.getRegionManager(p.getLocation().getWorld()).getApplicableRegions(p.getLocation())) {
-			for(Integer regno : blockedRegions.keySet()) {
-				String regstring = blockedRegions.get(regno);
-				if(rg.getId().equalsIgnoreCase(regstring)){
-					InArena = true;
-					break;
-				}
-			}
-			if(InArena) {
-				break;
-			}
-		}
-		if(InArena) {
-			e.setCancelled(true);
-			p.sendMessage(regionMessage);
-		}
-		if(e.isCancelled()) {
-			if(skillFailSound != null) {
-				if(!skillFailSound.equals("")) {
-					p.playSound(p.getLocation(), skillFailSound, 0.5F, 0.9F);
-				}
-			}
-		}
     }
     
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
@@ -503,6 +483,8 @@ public class AddonForSkillAPI extends JavaPlugin implements SkillPlugin, Listene
         boolean dmg = yaml.getBoolean("DamageInducators");
         boolean heal = yaml.getBoolean("HealInducators");
         boolean invulnerable = yaml.getBoolean("AllArmorStandsInvulnerable");
+        boolean animation = yaml.getBoolean("InducatorAnimation.enabled");
+        radius = yaml.getDouble("InducatorAnimation.radius");
         double xmax = yaml.getDouble("ArmorStandSpawnLocation.xmax");
         double xmin = yaml.getDouble("ArmorStandSpawnLocation.xmin");
         double ymax = yaml.getDouble("ArmorStandSpawnLocation.ymax");
@@ -539,14 +521,6 @@ public class AddonForSkillAPI extends JavaPlugin implements SkillPlugin, Listene
             }
         }
         
-        List<String> regions = yaml.getStringList("ProtectedRegions.regions");
-        for(int i = 0; i < regions.size(); i ++) {
-        	blockedRegions.put(i, regions.get(i));
-        }
-        
-        regionMessage = yaml.getString("ProtectedRegions.blockSkillMessage");
-        regionMessage = ChatColor.translateAlternateColorCodes('&', regionMessage);
-        
         skillFailSound = yaml.getString("FailSound.name");
         
         boolean slotact = yaml.getBoolean("SkillSlots.active");
@@ -557,14 +531,8 @@ public class AddonForSkillAPI extends JavaPlugin implements SkillPlugin, Listene
         getLogger().info("Heal inducators = " + heal);
         getLogger().info("All ArmorStands Invulnerable = " + invulnerable);
         
-        boolean friendlyraces = yaml.getBoolean("FriendlyRaces.active");
-        if(friendlyraces) {
-        	friendlyIgnoreMaps = yaml.getStringList("ProtectedRegions.regions");
-        }
-        
-        
-        configurations.put("friendlyraces", friendlyraces);
         nonSkillSlots = slots;
+        configurations.put("animation", animation);
         configurations.put("skillSlotsActive", slotact);
         configurations.put("damage", dmg);
         configurations.put("heal", heal);
@@ -584,7 +552,7 @@ public class AddonForSkillAPI extends JavaPlugin implements SkillPlugin, Listene
     }
     
     private void loadDefaultOptions() {
-    	configurations.put("friendlyraces", false);
+    	configurations.put("animation", true);
     	configurations.put("skillSlotsActive", false);
         configurations.put("damage", true);
         configurations.put("heal", true);
