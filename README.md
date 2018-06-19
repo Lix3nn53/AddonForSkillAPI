@@ -11,8 +11,6 @@ Here is a list of what my Addon does:
 - Make all armor stands invulnerable to damage.
 - Better Chat Prefix, including Level.
 - A well requested feature of Block Break Event (Runs skills when breaking blocks).
-- Another feature lacking on SkillAPI, protected World Guard Regions, where skills cannot be used!
-- Friendly races option: Players of same class groups cant hit each other
 - Fixes for skill bar errors
 - Cast skills on drinking potions
 
@@ -33,7 +31,7 @@ Q: - Does it work with the Free version of SAPI?
 A: - Yes.
 
 Q: - Is the code Open Source?
-A: - Not at the moment, but soon!
+A: - https://github.com/Lix3nn53/AddonForSkillAPI
 
 Q: - Does it support older versions like 1.8.X?
 A: - Only tested with 1.12.2 but should work with older versions
