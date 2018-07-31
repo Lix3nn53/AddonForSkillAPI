@@ -7,23 +7,17 @@ SkillAPI.
 
 Here is a list of what my Addon does:
 
-- Damage / Heal Holograms Indicators.
-- Make all armor stands invulnerable to damage.
-- Better Chat Prefix, including Level.
-- A well requested feature of Block Break Event (Runs skills when breaking blocks).
-- Fixes for skill bar errors
+- Damage / Heal Holograms Indicators
+- Different icons for different damage classifiers
+- Choice between vanilla armor stands or armor stand packets
+- Skill cast fail sound effect
+- Better Chat Prefix, including Level
 - Cast skills on drinking potions
 
 Everything in my plugin is toggleable, so if you don't like a feature, feel free to disable it!
 
 Commands:
 /afs reload - reloads the config
-/afs changeclass <player> <class to change> <new class>
-/afs setlevel <player> <class> <level>
-
-changeclass and setlevel can be useful if player has more than one class in his/her active account.
-For example if you have a class which you use for races like "Elf" and an "Elf"+"Archer" wants to change his class to "Mage" and
-become an "Elf"+"Mage" you can use this command: /afs changeclass <player> Archer Mage
 
 FAQ:
 
