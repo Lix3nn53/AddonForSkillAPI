@@ -1,6 +1,6 @@
 main: com.utilities.AddonForSkillAPI
 name: AddonForSkillAPI
-version: 1.0
+version: 1.17
 author: Lix3nn
 description: AddonForSkillAPI
 depend: [SkillAPI,ProtocolLib,PacketWrapper]
