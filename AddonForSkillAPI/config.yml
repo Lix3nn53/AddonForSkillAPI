@@ -9,12 +9,20 @@ DamageInducators: true
 #   inducator for healing done by skills
 HealInducators: true
 
-InducatorAnimation:
-  enabled: true
-  radius: 0.12
+#   Vanilla armor stands or armor stand packets for holograms
+#   Packets are faster but only the player who attack or heal can see the inducator
+NormalHolograms: true
 
-#   all armor stands does not take any damage from entities
-AllArmorStandsInvulnerable: true
+#   Give different damage classifiers different icons
+#   Color codes: & followed by 0-9, A-F, a-f, K-O, k-o, R or r
+IconClassifier:
+  active: false
+  classifiers:
+  - Classifier1
+  - Classifier2
+  icons:
+  - &4iconForClassifier1
+  - &aiconForClassifier2
 
 #   target's x location + random between xmax-xmin = x location to summon inducator
 ArmorStandSpawnLocation: 
@@ -29,7 +37,7 @@ ArmorStandSpawnLocation:
 FailSound: 
   name: ''
   
-#   Icons
+#   Dfeault Icons
 Icons: 
   damage: '➹'
   heal: '❤'
@@ -40,43 +48,15 @@ Digits:
   heal: 0
   
 #   %class% and %level%
-#   Color codes: & followed by 0-9, A-F, a-f, K-O, k-o, R or r.
+#   Color codes: & followed by 0-9, A-F, a-f, K-O, k-o, R or r
 #   for color of the player's class use %color%
 ChatPrefix:
   tablist: true
   active: true
   prefix: '%color%[%class%%color%] &6%level% &f'
   suffix: '&7 > &f'
- 
-#   if howmanyblocks is 0 feature is disabled. if howmanyblocks is 1, block1 will work but block2 wont
-#   if player breaks block1, skill1 will be cast by player
-#   you must write materials instead of block1 etc
-#   for material list: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Material.html
-#   skill must have a cast trigger
-
-BlockBreakEvent:
-  howmanyblocks: 0
-  blocks:
-  - ACACIA_DOOR
-  - ACACIA_FENCE
-  skills:
-    1:
-    - skill1forblock1
-    - skill2forblock1
-    2:
-    - skill1forblock2
-  
-#   fix skillapi hotbar casting bugs
-SkillSlots:
-  active: false
-  nonSkillSlots:
-  - 9
-  - 8
-  - 7
-  - 6
-  - 5
   
 #   if you drink a potion named "Healing Skill level 1" and your split: ' level '
-#   player will use this skill "healing skill" as level 1
+#   player will use "healing skill" at skill level 1
 PotionSkill:
   split: ' level '
